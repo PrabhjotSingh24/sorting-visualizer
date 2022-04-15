@@ -1,5 +1,3 @@
-
-
 import pygame
 import random
 
@@ -18,7 +16,7 @@ class DrawInformation:
     # padding from right and left
     padding = 100
     # top padding for the controls
-    top_padding = 200
+    top_padding = 125
 
     font = pygame.font.SysFont("Poppins regular", 25)
     head_font = pygame.font.SysFont("Poppins semibold", 30)
@@ -50,16 +48,21 @@ def list_gen(n, min_val, max_val):
     return lst
 
 
-def draw(draw_info: DrawInformation):
+def draw(draw_info: DrawInformation,sorting_algo,ascending):
+    # available_algos=SortingAlgos(draw_info)
     draw_info.window.fill(draw_info.bg)
     controls = draw_info.font.render(
         "R-reset | SPACE-start sorting | A-ascending | D-descending", True, draw_info.black)
     draw_info.window.blit(
         controls, ((draw_info.width-controls.get_width())//2, 10))
     controls2 = draw_info.font.render(
-        "B-Bubble Sort | I-Insertion Sort", True, draw_info.black)
+        "B-Bubble Sort | I-Insertion Sort | S-Selection Sort", True, draw_info.black)
     draw_info.window.blit(
         controls2, ((draw_info.width-controls2.get_width())//2, controls.get_height() + 15))
+    controls3=draw_info.head_font.render(
+        f"{sorting_algo} - {ascending}", True, draw_info.black)
+    draw_info.window.blit(
+        controls3, ((draw_info.width-controls3.get_width())//2, controls2.get_height() + 40))
 
     draw_list(draw_info)
     pygame.display.update()
@@ -68,8 +71,7 @@ def draw(draw_info: DrawInformation):
 def draw_list(draw_info: DrawInformation, color_positions={}, clear_bg=False):
     lst = draw_info.lst
     if clear_bg:
-        clear_rect = (draw_info.padding//2, draw_info.top_padding, draw_info.width -
-                      draw_info.padding, draw_info.height-draw_info.top_padding)
+        clear_rect = (draw_info.padding//2, draw_info.top_padding, draw_info.width -draw_info.padding, draw_info.height-draw_info.top_padding)
         pygame.draw.rect(draw_info.window, draw_info.bg, clear_rect)
     for i, val in enumerate(lst):
         x = draw_info.start_x+i*draw_info.block_width
@@ -79,16 +81,15 @@ def draw_list(draw_info: DrawInformation, color_positions={}, clear_bg=False):
         if i in color_positions:
             color = color_positions[i]
 
-        pygame.draw.rect(draw_info.window, color,
-                         (x, y, draw_info.block_width, draw_info.height))
+        pygame.draw.rect(draw_info.window, color,(x, y, draw_info.block_width, draw_info.height))
     if clear_bg:
         pygame.display.update()
 
 
 class SortingAlgos:
     def __init__(self, draw_info: DrawInformation) -> None:
-
         self.draw_info = draw_info
+
 
     def bubble_sort(self, ascending=True):
         lst = self.draw_info.lst
@@ -97,8 +98,7 @@ class SortingAlgos:
             for j in range(len(lst)-1-i):
                 if (lst[j] > lst[j+1] and ascending) or (lst[j] > lst[j+1] and not ascending):
                     lst[j], lst[j+1] = lst[j+1], lst[j]
-                    draw_list(self.draw_info, {
-                              j: self.draw_info.green, i: self.draw_info.red}, True)
+                    draw_list(self.draw_info, {j: self.draw_info.green, i: self.draw_info.red}, True)
                     yield True
         return lst
 
@@ -108,18 +108,15 @@ class SortingAlgos:
         for i in range(1, len(lst)):
             current_rect = lst[i]
             while True:
-                ascending_sort = i > 0 and lst[i -
-                                               1] > current_rect and ascending
-                descending_sort = i > 0 and lst[i -
-                                                1] < current_rect and not ascending
+                ascending_sort = i > 0 and lst[i -1] > current_rect and ascending
+                descending_sort = i > 0 and lst[i -1] < current_rect and not ascending
 
                 if not ascending_sort and not descending_sort:
                     break
                 lst[i] = lst[i-1]
                 i = i-1
                 lst[i] = current_rect
-                draw_list(self.draw_info, {
-                          i-1: self.draw_info.green, i: self.draw_info.red}, True)
+                draw_list(self.draw_info, {i-1: self.draw_info.green, i: self.draw_info.red}, True)
                 yield True
         return lst
 
@@ -141,7 +138,7 @@ class SortingAlgos:
 
 def main():
     fps = pygame.time.Clock()
-    n = 50
+    n = 100
     min_val = 0
     max_val = 100
     run = True
@@ -149,9 +146,8 @@ def main():
     ascending = True
     lst = list_gen(n, min_val, max_val)
     draw_rects = DrawInformation(500, 500, lst)
-    sorting_algorithm = SortingAlgos(
-        draw_rects).selection_sort
-    sorting_algorithm_generator = None
+    sorting_algorithm_name="Bubble Sort"
+    sorting_algorithm_generator = SortingAlgos(draw_rects).bubble_sort(ascending=ascending)
     while run:
         fps.tick(120)
         if sorting:
@@ -160,24 +156,31 @@ def main():
             except StopIteration:
                 sorting = False
         else:
-            draw(draw_rects)
+            draw(draw_rects,sorting_algorithm_name,ascending)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            elif event.type != pygame.KEYDOWN:
+            if event.type != pygame.KEYDOWN:
                 continue
-            elif event.key == pygame.K_r:
+            if event.key == pygame.K_r:
                 lst = list_gen(n, max_val=max_val, min_val=min_val)
                 draw_rects.set_list(lst)
                 sorting = False
-            elif event.key == pygame.K_SPACE and sorting == False:
+            if event.key == pygame.K_SPACE and sorting == False :
                 sorting = True
-                sorting_algorithm_generator = sorting_algorithm(
-                    ascending=ascending)
-            elif event.key == pygame.K_a and not sorting:
+            if event.key == pygame.K_a and not sorting:
                 ascending = True
-            elif event.key == pygame.K_d and not sorting:
+            if event.key == pygame.K_d and not sorting:
                 ascending = False
+            if event.key==pygame.K_b and not sorting:
+                sorting_algorithm_name="Bubble Sort"
+                sorting_algorithm_generator = SortingAlgos(draw_rects).bubble_sort(ascending=ascending)
+            if event.key==pygame.K_i and not sorting:
+                sorting_algorithm_name="Insertion Sort"
+                sorting_algorithm_generator = SortingAlgos(draw_rects).insertion_sort(ascending=ascending)
+            if event.key==pygame.K_s and not sorting:
+                sorting_algorithm_name="Selection Sort"
+                sorting_algorithm_generator = SortingAlgos(draw_rects).selection_sort(ascending=ascending)
     pygame.quit()
 
 
