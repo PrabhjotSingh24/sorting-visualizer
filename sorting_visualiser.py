@@ -7,7 +7,6 @@ import random
 pygame.init()
 
 
-
 class DrawInformation:
     black = 0, 0, 0
     white = 255, 255, 255
@@ -124,28 +123,20 @@ class SortingAlgos:
                 yield True
         return lst
 
-    def quick_sort(self):
+    def selection_sort(self, ascending):
         lst = self.draw_info.lst
-        if len(lst) <= 1:
-            return lst
-        pivot = lst.pop()
-        greater = []
-        lower = []
-        for i in lst:
-            if self.ascending:
-                if i > pivot:
-                    greater.append(i)
-                else:
-                    lower.append(i)
-            else:
-                if i < pivot:
-                    greater.append(i)
-                else:
-                    lower.append(i)
-        draw_list(self.draw_info, {
-                  i-1: self.draw_info.green, i: self.draw_info.red}, True)
-        yield True
-        return self.quick_sort(self, lower)+[pivot]+self.quick_sort(self, greater)
+        indexing_length = range(0, len(lst)-1)
+        for i in indexing_length:
+            min_value_index = i
+            for j in range(i+1, len(lst)):
+                if lst[j] < lst[min_value_index]:
+                    min_value_index = j
+            draw_list(self.draw_info, {
+                i-1: self.draw_info.green, i: self.draw_info.red}, True)
+            if min_value_index != i:
+                lst[i], lst[min_value_index] = lst[min_value_index], lst[i]
+            yield True
+        return lst
 
 
 def main():
@@ -159,7 +150,7 @@ def main():
     lst = list_gen(n, min_val, max_val)
     draw_rects = DrawInformation(500, 500, lst)
     sorting_algorithm = SortingAlgos(
-        draw_rects).insertion_sort
+        draw_rects).selection_sort
     sorting_algorithm_generator = None
     while run:
         fps.tick(120)
